@@ -95,14 +95,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Removed color filter to avoid grey square on non-transparent assets
-              Image.asset(
-                'assets/images/logo_splash.png',
-                height: 140,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                  Icons.fitness_center,
-                  size: 80,
-                  color: Colors.white,
-                ),
+              Icon(
+                Icons.fitness_center,
+                size: 80,
+                color: Theme.of(context).primaryColor,
               ),
               const SizedBox(height: 32),
               // App Title

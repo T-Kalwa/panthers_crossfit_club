@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'presentation/screens/splash_screen.dart';
 import 'data/repositories/member_repository.dart';
+import 'data/services/hive_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await HiveService.init();
+  // await Firebase.initializeApp(); // Uncomment when firebase_options.dart is ready
   
   final memberRepository = MemberRepository();
   await memberRepository.seedMockUser();
@@ -27,10 +32,10 @@ class PanthersApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF0A0A0A),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFB0BEC5), // Stealth Metallic Blue/Grey
+          seedColor: const Color(0xFFFF6D00), // Deep Metallic Orange
           brightness: Brightness.dark,
-          primary: const Color(0xFFCFD8DC), // Lighter Silver
-          secondary: const Color(0xFF455A64), // Darker Steel
+          primary: const Color(0xFFFF6D00),
+          secondary: const Color(0xFFFF9E40),
           surface: const Color(0xFF121212),
         ),
         textTheme: GoogleFonts.outfitTextTheme(

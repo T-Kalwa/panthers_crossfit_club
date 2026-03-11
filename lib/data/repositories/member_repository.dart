@@ -1,55 +1,58 @@
 import '../../domain/models/member.dart';
-import '../services/json_storage_service.dart';
+import '../services/hive_service.dart';
 import '../../domain/repositories/i_member_repository.dart';
 
 class MemberRepository implements IMemberRepository {
-  final JsonStorageService _storageService = JsonStorageService('members.json');
+  final HiveService _hiveService = HiveService();
 
   @override
   Future<Member?> login(String username, String phoneNumber) async {
-    final List<Member> members = await getAllMembers();
-    try {
-      return members.firstWhere(
-        (m) => m.username == username && m.phoneNumber == phoneNumber,
-      );
-    } catch (e) {
-      return null;
+    // Legacy support for phone login if needed, but the prompt emphasizes matricule.
+    // For now, we'll implement loginByQrData as the primary entry point.
+    return null; 
+  }
+
+  @override
+  Future<Member?> loginByQrData(String qrData) async {
+    // In a real app, we would fetch from Firestore here and cache to Hive.
+    // For this POC, we'll check our mock user.
+    if (qrData == 'P009') {
+      final mock = _getMockJoseph();
+      await _hiveService.saveMember(mock);
+      return mock;
     }
+    return null;
   }
 
   @override
   Future<List<Member>> getAllMembers() async {
-    final data = await _storageService.readJson();
-    if (data == null || data is! List) {
-      return [];
-    }
-    return data.map((item) => Member.fromJson(item)).toList();
+    // Return the cached member or empty list
+    final m = _hiveService.getMember();
+    return m != null ? [m] : [];
   }
 
   @override
   Future<void> saveMember(Member member) async {
-    final List<Member> members = await getAllMembers();
-    final index = members.indexWhere((m) => m.id == member.id);
-    if (index != -1) {
-      members[index] = member;
-    } else {
-      members.add(member);
-    }
-    await _storageService.writeJson(members.map((m) => m.toJson()).toList());
+    await _hiveService.saveMember(member);
+    // TODO: Sync to Firestore
   }
 
-  // Method to seed a test user if the file is empty
   Future<void> seedMockUser() async {
-    final existing = await getAllMembers();
-    if (existing.isEmpty) {
-      final mockMember = Member(
-        id: '1',
-        username: 'admin',
-        phoneNumber: '0600000000',
-        fullName: 'Admin Panther',
-        registrationDate: DateTime.now(),
-      );
-      await saveMember(mockMember);
+    final existing = _hiveService.getMember();
+    if (existing == null) {
+      final mock = _getMockJoseph();
+      await _hiveService.saveMember(mock);
     }
+  }
+
+  Member _getMockJoseph() {
+    return Member(
+      matricule: 'P009',
+      nomComplet: 'Joseph Benson',
+      dateFin: DateTime.now().add(const Duration(days: 91)),
+      activite: 'CROSSFIT',
+      avecCoach: true,
+      phoneNumber: '+33 6 12 34 56 78',
+    );
   }
 }

@@ -1,69 +1,74 @@
-class Member {
-  final String id;
-  final String username;
-  final String phoneNumber;
-  final String fullName;
-  final DateTime registrationDate;
-  final bool isActive;
-  final String? qrCodeData;
+import 'package:hive/hive.dart';
+
+part 'member.g.dart';
+
+@HiveType(typeId: 0)
+class Member extends HiveObject {
+  @HiveField(0)
+  final String matricule;
+  
+  @HiveField(1)
+  final String nomComplet;
+  
+  @HiveField(2)
+  final DateTime dateFin;
+  
+  @HiveField(3)
+  final String activite;
+  
+  @HiveField(4)
+  final bool avecCoach;
+  
+  @HiveField(5)
+  final String? phoneNumber;
+  
+  @HiveField(6)
   final String? profileImageUrl;
 
   Member({
-    required this.id,
-    required this.username,
-    required this.phoneNumber,
-    required this.fullName,
-    required this.registrationDate,
-    this.isActive = true,
-    this.qrCodeData,
+    required this.matricule,
+    required this.nomComplet,
+    required this.dateFin,
+    required this.activite,
+    this.avecCoach = false,
+    this.phoneNumber,
     this.profileImageUrl,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'username': username,
-      'phoneNumber': phoneNumber,
-      'fullName': fullName,
-      'registrationDate': registrationDate.toIso8601String(),
-      'isActive': isActive,
-      'qrCodeData': qrCodeData,
-      'profileImageUrl': profileImageUrl,
-    };
+  // Business Logic
+  int get daysRemaining {
+    final diff = dateFin.difference(DateTime.now()).inDays;
+    return diff > 0 ? diff : 0;
   }
 
-  factory Member.fromJson(Map<String, dynamic> json) {
-    return Member(
-      id: json['id'],
-      username: json['username'],
-      phoneNumber: json['phoneNumber'],
-      fullName: json['fullName'],
-      registrationDate: DateTime.parse(json['registrationDate']),
-      isActive: json['isActive'] ?? true,
-      qrCodeData: json['qrCodeData'],
-      profileImageUrl: json['profileImageUrl'],
-    );
+  double get expiryProgress {
+    // Arbitrary 30-day window for the progress circle visibility if no start date
+    // or we can just use a percentage if we had a registration date.
+    // Let's assume a default subscription period of 90 days for the "filling" visual.
+    const totalDays = 90; 
+    final remaining = daysRemaining;
+    return (remaining / totalDays).clamp(0.0, 1.0);
   }
 
-  Member copyWith({
-    String? id,
-    String? username,
-    String? phoneNumber,
-    String? fullName,
-    DateTime? registrationDate,
-    bool? isActive,
-    String? qrCodeData,
-    String? profileImageUrl,
-  }) {
-    return Member(
-      id: id ?? this.id,
-      username: username ?? this.username,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-      fullName: fullName ?? this.fullName,
-      registrationDate: registrationDate ?? this.registrationDate,
-      isActive: isActive ?? this.isActive,
-      qrCodeData: qrCodeData ?? this.qrCodeData,
-      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
-    );
-  }
+  bool get isExpired => DateTime.now().isAfter(dateFin);
+
+  Map<String, dynamic> toJson() => {
+    'matricule': matricule,
+    'nom_complet': nomComplet,
+    'date_fin': dateFin.toIso8601String(),
+    'activite': activite,
+    'avec_coach': avecCoach,
+    'phoneNumber': phoneNumber,
+    'profileImageUrl': profileImageUrl,
+  };
+
+  factory Member.fromJson(Map<String, dynamic> json) => Member(
+    matricule: json['matricule'],
+    nomComplet: json['nom_complet'],
+    dateFin: DateTime.parse(json['date_fin']),
+    activite: json['activite'],
+    avecCoach: json['avec_coach'] ?? false,
+    phoneNumber: json['phoneNumber'],
+    profileImageUrl: json['profileImageUrl'],
+  );
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/models/member.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'member_dashboard_screen.dart';
+import 'qr_scanner_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final MemberRepository memberRepository;
@@ -14,48 +16,47 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final TextEditingController _matriculeController = TextEditingController();
   bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _phoneController.dispose();
-    super.dispose();
-  }
-
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      
-      final member = await widget.memberRepository.login(
-        _usernameController.text.trim(),
-        _phoneController.text.trim(),
-      );
+    final matricule = _matriculeController.text.trim().toUpperCase();
+    if (matricule.isEmpty) return;
 
-      setState(() => _isLoading = false);
+    setState(() => _isLoading = true);
 
+    try {
+      final member = await widget.memberRepository.loginByQrData(matricule);
       if (member != null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome back, ${member.fullName}'),
-            backgroundColor: const Color(0xFF455A64),
-            behavior: SnackBarBehavior.floating,
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MemberDashboardScreen(member: member),
           ),
         );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Athlete not found.'),
+            content: Text('Matricule invalide'),
             backgroundColor: Colors.redAccent,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleQrScan() async {
+    final result = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (context) => const QrScannerScreen()),
+    );
+
+    if (result != null) {
+      _matriculeController.text = result;
+      _handleLogin();
     }
   }
 
@@ -66,14 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           // Background Image with Dark Sombre Overlay
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/athlete_hero.png',
-              fit: BoxFit.cover,
-              filterQuality: FilterQuality.high,
-              errorBuilder: (context, error, stackTrace) => Container(color: Colors.black),
-            ),
-          ),
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -100,23 +93,49 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 60),
-                    // Header Section
-                    Text(
-                      'Move With\nMeaning',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.displayLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                      child: Text(
-                        'Push limits. Learn. Adapt.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white54,
-                          letterSpacing: 1,
+                    // Modern Branding Logo
+                    Container(
+                      height: 120,
+                      width: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.05),
+                        border: Border.all(color: Colors.white10, width: 1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).primaryColor.withOpacity(0.1),
+                            blurRadius: 40,
+                            spreadRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.fitness_center,
+                          size: 60,
+                          color: Theme.of(context).primaryColor,
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    Text(
+                      'PANTHERS CLUB',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 40,
+                        letterSpacing: 4,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'PUSH LIMITS • GAIN RESULTS',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).primaryColor.withOpacity(0.8),
+                        letterSpacing: 2,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 60),
@@ -136,37 +155,63 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 1,
                             ),
                           ),
-                          child: Form(
-                            key: _formKey,
-                            child: Column(
-                              children: [
-                                TextFormField(
-                                  controller: _usernameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Athlete Username',
-                                    hintText: 'e.g. panther_01',
+                          child: Column(
+                            children: [
+                              // Matricule Input
+                              TextField(
+                                controller: _matriculeController,
+                                style: GoogleFonts.outfit(color: Colors.white),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.05),
+                                  hintText: "Matricule (ex: P009)",
+                                  hintStyle: GoogleFonts.outfit(color: Colors.white24),
+                                  prefixIcon: const Icon(Icons.badge_outlined, color: Colors.white24),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  validator: (value) => (value == null || value.isEmpty) ? '' : null,
                                 ),
-                                const SizedBox(height: 24),
-                                TextFormField(
-                                  controller: _phoneController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Phone Number',
-                                    hintText: 'e.g. 0600000000',
+                              ),
+                              const SizedBox(height: 24),
+                              // Login Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 60,
+                                child: ElevatedButton(
+                                  onPressed: _isLoading ? null : _handleLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF39FF14),
+                                    foregroundColor: Colors.black,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
                                   ),
-                                  keyboardType: TextInputType.phone,
-                                  validator: (value) => (value == null || value.isEmpty) ? '' : null,
+                                  child: _isLoading
+                                      ? const CircularProgressIndicator(color: Colors.black)
+                                      : Text(
+                                          "SE CONNECTER",
+                                          style: GoogleFonts.outfit(
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 1.5,
+                                          ),
+                                        ),
                                 ),
-                                const SizedBox(height: 48),
-                                _isLoading
-                                    ? const CircularProgressIndicator(strokeWidth: 2)
-                                    : ElevatedButton(
-                                        onPressed: _handleLogin,
-                                        child: const Text('ENTER THE CLUB'),
-                                      ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 16),
+                              // QR Scan Option
+                              TextButton.icon(
+                                onPressed: _isLoading ? null : _handleQrScan,
+                                icon: const Icon(Icons.qr_code_scanner, color: Color(0xFF39FF14)),
+                                label: Text(
+                                  "SCAN QR PASS",
+                                  style: GoogleFonts.outfit(
+                                    color: const Color(0xFF39FF14),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -179,19 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           
-          // Small Logo Fix: Removed opacity color filter
-          Positioned(
-            top: 24,
-            left: 24,
-            child: Opacity(
-              opacity: 0.6,
-              child: Image.asset(
-                'assets/images/logo_splash.png',
-                height: 32,
-                errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, size: 24),
-              ),
-            ),
-          ),
         ],
       ),
     );
