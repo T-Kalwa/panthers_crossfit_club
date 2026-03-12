@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'login_screen.dart';
+import 'onboarding_screen.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/services/hive_service.dart';
 
 class SplashScreen extends StatefulWidget {
   final MemberRepository memberRepository;
@@ -62,10 +64,16 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     // Auto-navigation
     Timer(const Duration(seconds: 4), () {
       if (mounted) {
+        final hiveService = HiveService();
+        final hasSeenOnboarding = hiveService.hasSeenOnboarding;
+        
+        final Widget nextScreen = hasSeenOnboarding 
+          ? LoginScreen(memberRepository: widget.memberRepository)
+          : const OnboardingScreen();
+
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => 
-              LoginScreen(memberRepository: widget.memberRepository),
+            pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
@@ -94,11 +102,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Removed color filter to avoid grey square on non-transparent assets
-              Icon(
-                Icons.fitness_center,
-                size: 80,
-                color: Theme.of(context).primaryColor,
+              // App Logo
+              Image.asset(
+                'assets/images/logo_splash.png',
+                height: 120,
               ),
               const SizedBox(height: 32),
               // App Title

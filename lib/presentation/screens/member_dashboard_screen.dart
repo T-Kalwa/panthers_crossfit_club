@@ -1,24 +1,110 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'dart:async';
+import 'package:intl/intl.dart';
 import '../../domain/models/member.dart';
+import '../../data/services/hive_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'about_us_screen.dart';
 
-class MemberDashboardScreen extends StatelessWidget {
+class MemberDashboardScreen extends StatefulWidget {
   final Member member;
 
   const MemberDashboardScreen({super.key, required this.member});
 
-  static const Color neonGreen = Color(0xFF39FF14);
-  static const Color background = Color(0xFF0A0A0A);
+  @override
+  State<MemberDashboardScreen> createState() => _MemberDashboardScreenState();
+}
+
+class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
+  final HiveService _hiveService = HiveService();
+  final PageController _sliderController = PageController();
+  late Timer _clockTimer;
+  DateTime _now = DateTime.now();
+  List<bool> _weeklyTracker = List.generate(7, (_) => false);
+  int _currentSlide = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTrackerData();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _now = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer.cancel();
+    _sliderController.dispose();
+    super.dispose();
+  }
+
+  void _loadTrackerData() {
+    final storedWeekId = _hiveService.getStoredWeekId();
+    final currentWeekId = _getWeekId(DateTime.now());
+
+    if (storedWeekId != currentWeekId) {
+      _weeklyTracker = List.generate(7, (_) => false);
+      _hiveService.saveWeeklyTracker(_weeklyTracker);
+      _hiveService.saveWeekId(currentWeekId);
+    } else {
+      _weeklyTracker = _hiveService.getWeeklyTracker();
+    }
+    setState(() {});
+  }
+
+  int _getWeekId(DateTime date) {
+    DateTime startOfWeek = date.subtract(Duration(days: date.weekday - 1));
+    return startOfWeek.year * 10000 + startOfWeek.month * 100 + startOfWeek.day;
+  }
+
+  void _toggleDay(int index) {
+    if (index == DateTime.now().weekday - 1) {
+      setState(() {
+        _weeklyTracker[index] = !_weeklyTracker[index];
+      });
+      _hiveService.saveWeeklyTracker(_weeklyTracker);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Background Glow
+          // Background Image with Overlay
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/int_3.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(color: Colors.black);
+              },
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.2),
+                    Colors.black.withOpacity(0.5),
+                    Colors.black.withOpacity(0.8),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Background Glow (Subtle)
           Positioned(
             top: -100,
             right: -100,
@@ -27,7 +113,7 @@ class MemberDashboardScreen extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: neonGreen.withOpacity(0.05),
+                color: Colors.white.withOpacity(0.02),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
@@ -42,9 +128,11 @@ class MemberDashboardScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   _buildTopNav(context),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   _buildProgressCircle(),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
+                  _buildDashboardSlider(),
+                  const SizedBox(height: 20),
                   _buildMemberInfo(context),
                   const SizedBox(height: 32),
                   _buildQuickAction(context),
@@ -82,16 +170,51 @@ class MemberDashboardScreen extends StatelessWidget {
                 fontSize: 10,
                 fontWeight: FontWeight.w400,
                 letterSpacing: 2,
-                color: neonGreen,
+                color: Colors.white54,
               ),
             ),
           ],
         ),
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: Colors.white.withOpacity(0.1),
-          backgroundImage: member.profileImageUrl != null ? NetworkImage(member.profileImageUrl!) : null,
-          child: member.profileImageUrl == null ? const Icon(Icons.person, color: Colors.white24) : null,
+        Row(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  widget.member.nomComplet.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'MEMBRE',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white38,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.white.withOpacity(0.1),
+              backgroundImage: widget.member.profileImageUrl != null ? NetworkImage(widget.member.profileImageUrl!) : null,
+              child: widget.member.profileImageUrl == null ? const Icon(Icons.person, color: Colors.white24, size: 20) : null,
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AboutUsScreen()),
+              ),
+              icon: const Icon(Icons.info_outline, color: Colors.white70),
+            ),
+          ],
         ),
       ],
     );
@@ -102,22 +225,22 @@ class MemberDashboardScreen extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         SizedBox(
-          width: 220,
-          height: 220,
+          width: 140,
+          height: 140,
           child: CircularProgressIndicator(
-            value: member.expiryProgress,
-            strokeWidth: 12,
+            value: widget.member.expiryProgress,
+            strokeWidth: 8,
             backgroundColor: Colors.white.withOpacity(0.05),
-            color: neonGreen,
+            color: Colors.white,
             strokeCap: StrokeCap.round,
           ),
         ),
         Column(
           children: [
             Text(
-              '${member.daysRemaining}',
+              '${widget.member.daysRemaining}',
               style: GoogleFonts.outfit(
-                fontSize: 64,
+                fontSize: 42,
                 fontWeight: FontWeight.w900,
                 height: 1,
                 color: Colors.white,
@@ -126,9 +249,9 @@ class MemberDashboardScreen extends StatelessWidget {
             Text(
               'JOURS RESTANTS',
               style: GoogleFonts.outfit(
-                fontSize: 12,
+                fontSize: 8,
                 fontWeight: FontWeight.w500,
-                letterSpacing: 2,
+                letterSpacing: 1.5,
                 color: Colors.white38,
               ),
             ),
@@ -138,33 +261,179 @@ class MemberDashboardScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildDashboardSlider() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 120,
+          child: PageView(
+            controller: _sliderController,
+            onPageChanged: (index) => setState(() => _currentSlide = index),
+            children: [
+              _buildClockSlide(),
+              _buildWeeklyTrackerSlide(),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(2, (index) => AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            height: 6,
+            width: _currentSlide == index ? 16 : 6,
+            decoration: BoxDecoration(
+              color: _currentSlide == index ? Colors.white : Colors.white24,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          )),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClockSlide() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                DateFormat('HH:mm').format(_now),
+                style: GoogleFonts.outfit(
+                  fontSize: 42,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: -1,
+                ),
+              ),
+              Text(
+                DateFormat('EEEE d MMMM', 'fr').format(_now).toUpperCase(),
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white54,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyTrackerSlide() {
+    final days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'WEEKLY FITNESS TRACKER',
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white38,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(7, (index) {
+                  bool isToday = index == DateTime.now().weekday - 1;
+                  bool isValidated = _weeklyTracker[index];
+                  return GestureDetector(
+                    onTap: () => _toggleDay(index),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isValidated ? Colors.white : Colors.transparent,
+                            border: Border.all(
+                              color: isValidated 
+                                  ? Colors.white 
+                                  : (isToday ? Colors.white38 : Colors.white10),
+                              width: 1.5,
+                            ),
+                            boxShadow: isValidated ? [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.3),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              )
+                            ] : null,
+                          ),
+                          child: Center(
+                            child: isValidated 
+                                ? const Icon(Icons.check, size: 20, color: Colors.black)
+                                : (isToday ? const Icon(Icons.fitness_center, size: 14, color: Colors.white24) : null),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          days[index],
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isToday ? Colors.white : Colors.white24,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMemberInfo(BuildContext context) {
     return Column(
       children: [
-        Text(
-          member.nomComplet.toUpperCase(),
-          style: GoogleFonts.outfit(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
-            color: member.isExpired ? Colors.red.withOpacity(0.1) : neonGreen.withOpacity(0.1),
+            color: widget.member.isExpired ? Colors.red.withOpacity(0.1) : Colors.white.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: member.isExpired ? Colors.red.withOpacity(0.3) : neonGreen.withOpacity(0.3),
+              color: widget.member.isExpired ? Colors.red.withOpacity(0.3) : Colors.white.withOpacity(0.3),
             ),
           ),
           child: Text(
-            member.isExpired ? 'EXPIRÉ' : 'ACTIVE',
+            widget.member.isExpired ? 'EXPIRÉ' : 'ACTIVE',
             style: GoogleFonts.outfit(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: member.isExpired ? Colors.redAccent : neonGreen,
+              color: widget.member.isExpired ? Colors.redAccent : Colors.white,
               letterSpacing: 1,
             ),
           ),
@@ -175,16 +444,16 @@ class MemberDashboardScreen extends StatelessWidget {
 
   Widget _buildQuickAction(BuildContext context) {
     return InkWell(
-      onTap: member.isExpired ? null : () => _showQrModal(context),
+      onTap: widget.member.isExpired ? null : () => _showQrModal(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 32),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         decoration: BoxDecoration(
-          color: member.isExpired ? Colors.white.withOpacity(0.05) : neonGreen,
+          color: widget.member.isExpired ? Colors.white.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(40),
           boxShadow: [
-            if (!member.isExpired)
+            if (!widget.member.isExpired)
               BoxShadow(
-                color: neonGreen.withOpacity(0.3),
+                color: Colors.white.withOpacity(0.2),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -194,16 +463,16 @@ class MemberDashboardScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              member.isExpired ? Icons.lock_outline : Icons.qr_code_2,
-              color: member.isExpired ? Colors.white24 : Colors.black,
+              widget.member.isExpired ? Icons.lock_outline : Icons.qr_code_2,
+              color: widget.member.isExpired ? Colors.white24 : Colors.black,
             ),
             const SizedBox(width: 12),
             Text(
-              member.isExpired ? 'ACCÈS BLOQUÉ' : 'SHOW QR CODE',
+              widget.member.isExpired ? 'ACCÈS BLOQUÉ' : 'SHOW QR CODE',
               style: GoogleFonts.outfit(
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
-                color: member.isExpired ? Colors.white24 : Colors.black,
+                color: widget.member.isExpired ? Colors.white24 : Colors.black,
                 letterSpacing: 1,
               ),
             ),
@@ -220,13 +489,13 @@ class MemberDashboardScreen extends StatelessWidget {
           children: [
             _buildGlassCard(
               'Activité',
-              member.activite,
+              widget.member.activite,
               Icons.fitness_center_outlined,
             ),
             const SizedBox(width: 16),
             _buildGlassCard(
               'Coaching',
-              member.avecCoach ? 'Inclus' : 'Standard',
+              widget.member.avecCoach ? 'Inclus' : 'Standard',
               Icons.person_pin_outlined,
             ),
           ],
@@ -234,7 +503,7 @@ class MemberDashboardScreen extends StatelessWidget {
         const SizedBox(height: 16),
         _buildGlassCardFull(
           'Abonnement jusqu\'au',
-          _formatDate(member.dateFin),
+          _formatDate(widget.member.dateFin),
           Icons.calendar_today_outlined,
         ),
       ],
@@ -244,8 +513,8 @@ class MemberDashboardScreen extends StatelessWidget {
   Widget _buildGlassCard(String title, String value, IconData icon) {
     return Expanded(
       child: Container(
-        height: 120,
-        padding: const EdgeInsets.all(20),
+        height: 100,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.03),
           borderRadius: BorderRadius.circular(24),
@@ -255,7 +524,7 @@ class MemberDashboardScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: neonGreen, size: 24),
+            Icon(icon, color: Colors.white70, size: 24),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -289,10 +558,10 @@ class MemberDashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: neonGreen.withOpacity(0.05),
+              color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: neonGreen, size: 24),
+            child: Icon(icon, color: Colors.white70, size: 24),
           ),
           const SizedBox(width: 20),
           Column(
@@ -318,10 +587,23 @@ class MemberDashboardScreen extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      enableDrag: true,
+      builder: (context) => TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        tween: Tween(begin: 0.0, end: 1.0),
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, 50 * (1 - value)),
+              child: child,
+            ),
+          );
+        },
         child: Container(
-          height: 500,
+          width: double.infinity,
+          padding: const EdgeInsets.only(bottom: 40),
           decoration: const BoxDecoration(
             color: Color(0xFF111111),
             borderRadius: BorderRadius.only(
@@ -330,8 +612,9 @@ class MemberDashboardScreen extends StatelessWidget {
             ),
           ),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 12),
               Container(
                 width: 40,
                 height: 4,
@@ -356,16 +639,22 @@ class MemberDashboardScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.1),
+                      blurRadius: 40,
+                    ),
+                  ],
                 ),
                 child: QrImageView(
-                  data: member.matricule,
+                  data: widget.member.matricule,
                   version: QrVersions.auto,
-                  size: 200.0,
+                  size: 220.0,
                 ),
               ),
               const SizedBox(height: 32),
               Text(
-                member.matricule,
+                widget.member.matricule,
                 style: GoogleFonts.outfit(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -374,11 +663,20 @@ class MemberDashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'CLOSE',
-                  style: GoogleFonts.outfit(color: neonGreen, fontWeight: FontWeight.bold),
+              SizedBox(
+                width: 200,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.05),
+                    foregroundColor: Colors.white,
+                    side: BorderSide(color: Colors.white.withOpacity(0.1)),
+                    minimumSize: const Size(double.infinity, 50),
+                  ),
+                  child: Text(
+                    'CLOSE',
+                    style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
