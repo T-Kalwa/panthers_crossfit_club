@@ -9,11 +9,11 @@ plugins {
 }
 
 android {
-    namespace = "com.panthers.crossfit"
+    namespace = "com.example.panthers_crossfit_club"
     compileSdk = flutter.compileSdkVersion
 
     defaultConfig {
-        applicationId = "com.panthers.crossfit"
+        applicationId = "com.example.panthers_crossfit_club"
         // Correction ici : On force le minSdk à 21 pour supporter le NDK moderne
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion

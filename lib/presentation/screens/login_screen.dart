@@ -350,65 +350,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _showDiagnosticDialog() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF151515),
-        title: Text(
-          'DIAGNOSTIC SYSTÈME',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _DiagnosticItem(
-              title: 'Connexion Firestore',
-              future: FirebaseFirestore.instance.collection('test_connection').limit(1).get(),
-            ),
-            const SizedBox(height: 16),
-            _DiagnosticItem(
-              title: 'Persistance Hive',
-              status: widget.memberRepository.hasSavedMembers() ? 'OK' : 'VIDE',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AdminHubPage(
-                    staffMember: MemberAccount(
-                      matricule: 'ADMIN',
-                      noms: 'Super Admin',
-                      role: 'superAdmin', // Logic uses superAdmin or admin for full access
-                      telephone: '000',
-                      activite: 'ADMINISTRATION',
-                      dureeForfait: 'ANNUEL',
-                      montantPaye: 0,
-                      dateDebut: DateTime.now(),
-                      dateFin: DateTime.now().add(const Duration(days: 365)),
-                      avecCoach: false,
-                    ),
-                    memberRepository: widget.memberRepository,
-                  ),
-                ),
-              );
-            },
-            child: Text('OUVRIR ADMIN HUB', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('FERMER', style: GoogleFonts.outfit(color: Colors.white38)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -450,32 +391,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Branding Logo / Icon
-                    GestureDetector(
-                      onLongPress: () => _showDiagnosticDialog(),
-                      child: Container(
-                        height: 100,
-                        width: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.05),
-                              blurRadius: 40,
-                              spreadRadius: 0,
-                            ),
-                          ],
+                    Container(
+                      height: 100,
+                      width: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                          width: 1,
                         ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.fitness_center,
-                            size: 50,
-                            color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.05),
+                            blurRadius: 40,
+                            spreadRadius: 0,
                           ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.fitness_center,
+                          size: 50,
+                          color: Colors.white,
                         ),
                       ),
                     ).animate().scale(duration: 800.ms, curve: Curves.easeOutBack),
@@ -591,35 +529,3 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _DiagnosticItem extends StatelessWidget {
-  final String title;
-  final Future? future;
-  final String? status;
-
-  const _DiagnosticItem({required this.title, this.future, this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(title, style: GoogleFonts.outfit(color: Colors.white70)),
-        if (status != null)
-          Text(status!, style: GoogleFonts.outfit(color: Colors.greenAccent, fontWeight: FontWeight.bold))
-        else
-          FutureBuilder(
-            future: future,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white));
-              }
-              if (snapshot.hasError) {
-                return const Icon(Icons.error, color: Colors.redAccent, size: 16);
-              }
-              return const Icon(Icons.check_circle, color: Colors.greenAccent, size: 16);
-            },
-          ),
-      ],
-    );
-  }
-}
