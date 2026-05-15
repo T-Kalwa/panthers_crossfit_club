@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Flutter generated iOS files
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+
 # Symbolication related
 app.*.symbols
 
