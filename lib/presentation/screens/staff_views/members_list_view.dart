@@ -119,10 +119,16 @@ class _MembersListViewState extends State<MembersListView> {
   }
 
   Widget _buildList(bool isSmall) {
-    return ValueListenableBuilder(
-      valueListenable: Hive.box<MemberAccount>(HiveService.accountsBoxName).listenable(),
-      builder: (context, Box<MemberAccount> box, _) {
-        if (box.isEmpty) {
+    return StreamBuilder<List<MemberAccount>>(
+      stream: widget.memberRepository.getMembersStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator(color: Colors.white));
+        }
+
+        final membersData = snapshot.data ?? [];
+        
+        if (membersData.isEmpty) {
           return Center(
             child: Text(
               'Aucun membre enregistré',
@@ -131,7 +137,7 @@ class _MembersListViewState extends State<MembersListView> {
           );
         }
 
-        var members = box.values.toList().reversed.toList();
+        var members = membersData.reversed.toList();
         
         if (_searchQuery.isNotEmpty) {
           members = members.where((m) => 

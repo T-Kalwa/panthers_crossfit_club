@@ -121,8 +121,17 @@ class MemberRepository implements IMemberRepository {
 
   @override
   Future<List<MemberAccount>> getAllMembers() async {
-    final account = _hiveService.getMemberAccount();
-    return account != null ? [account] : [];
+    final snapshot = await FirebaseFirestore.instance.collection('members').get();
+    return snapshot.docs.map((doc) => MemberAccount.fromJson(doc.data())).toList();
+  }
+
+  Stream<List<MemberAccount>> getMembersStream() {
+    return FirebaseFirestore.instance
+        .collection('members')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => MemberAccount.fromJson(doc.data()))
+            .toList());
   }
 
 
