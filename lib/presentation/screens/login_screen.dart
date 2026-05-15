@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         
         // Routing logic based on ROLE (not activite)
-        if (member.role == 'staff' || member.role == 'superAdmin') {
+        if (member.role == 'staff' || member.role == 'superAdmin' || member.role == 'admin') {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => AdminHubPage(
@@ -385,7 +385,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     staffMember: MemberAccount(
                       matricule: 'ADMIN',
                       noms: 'Super Admin',
-                      role: 'superAdmin',
+                      role: 'superAdmin', // Logic uses superAdmin or admin for full access
                       telephone: '000',
                       activite: 'ADMINISTRATION',
                       dureeForfait: 'ANNUEL',

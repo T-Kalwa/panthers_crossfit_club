@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
             widget.memberRepository.loginByMatriculeAndPhone(account.matricule, account.telephone);
             
             // Détermination de l'écran suivant par rôle
-            if (account.role == 'staff' || account.role == 'superAdmin') {
+            if (account.role == 'staff' || account.role == 'superAdmin' || account.role == 'admin') {
               nextScreen = AdminHubPage(
                 staffMember: account,
                 memberRepository: widget.memberRepository,

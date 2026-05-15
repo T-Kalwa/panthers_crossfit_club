@@ -113,7 +113,7 @@ class OverviewView extends StatelessWidget {
   }
 
   Widget _buildActivityItem(MemberAccount member) {
-    final isSuperAdmin = staffMember.role == 'superAdmin';
+    final isSuperAdmin = staffMember.role == 'superAdmin' || staffMember.role == 'admin';
     final staffRef = member.inscritPar ?? 'Système';
 
     return Container(

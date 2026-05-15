@@ -53,7 +53,7 @@ class MemberRepository implements IMemberRepository {
         // 3. Liaison de Sécurité (UID -> Matricule)
         // Indispensable pour que les Security Rules (firestore.rules) fonctionnent
         final user = FirebaseAuth.instance.currentUser;
-        if (user != null && (account.role == 'staff' || account.role == 'superAdmin')) {
+        if (user != null && (account.role == 'staff' || account.role == 'superAdmin' || account.role == 'admin')) {
           try {
             await FirebaseFirestore.instance
                 .collection('uids_to_members')

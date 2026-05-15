@@ -91,7 +91,7 @@ class AdminHubPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (staffMember.role == 'superAdmin') ...[
+                      if (staffMember.role == 'superAdmin' || staffMember.role == 'admin') ...[
                         SizedBox(height: isNarrow ? 12 : 20),
                         Row(
                           children: [

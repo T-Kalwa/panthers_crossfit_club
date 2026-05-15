@@ -39,7 +39,7 @@ class AuthService {
 
   /// L'utilisateur peut-il accéder aux données financières et rapports ?
   static bool canAccessFinancials(UserRole role) {
-    return role == UserRole.superAdmin;
+    return role == UserRole.superAdmin; // I'll keep financials to superAdmin/admin via string mapping
   }
 
   /// Convertit une String de rôle brute en UserRole enum
@@ -47,6 +47,7 @@ class AuthService {
     switch (roleStr.toLowerCase()) {
       case 'staff':
         return UserRole.staff;
+      case 'admin':
       case 'superadmin':
         return UserRole.superAdmin;
       default:
