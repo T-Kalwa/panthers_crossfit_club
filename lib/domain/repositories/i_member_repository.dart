@@ -6,5 +6,4 @@ abstract class IMemberRepository {
   Future<void> saveMemberAccount(MemberAccount account);
   Future<MemberAccount?> loginByQrData(String qrData);
   Future<String> generateNextMatricule({bool isStaff = false});
-  Stream<List<MemberAccount>> getMembersStream();
 }

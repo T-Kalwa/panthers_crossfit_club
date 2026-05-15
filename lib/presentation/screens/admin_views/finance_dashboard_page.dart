@@ -77,16 +77,11 @@ class _FinanceDashboardPageState extends State<FinanceDashboardPage> with Single
   }
 
   Widget _buildRevenueTab() {
-    return StreamBuilder<List<MemberAccount>>(
-      stream: widget.memberRepository.getMembersStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: Colors.white));
-        }
-
-        final members = snapshot.data ?? [];
-        final revenue = members.fold<double>(0, (sum, m) => sum + m.montantPaye);
-        final activeRevenue = members
+    return ValueListenableBuilder(
+      valueListenable: Hive.box<MemberAccount>(HiveService.accountsBoxName).listenable(),
+      builder: (context, Box<MemberAccount> box, _) {
+        final revenue = box.values.fold<double>(0, (sum, m) => sum + m.montantPaye);
+        final activeRevenue = box.values
             .where((m) => !m.isExpired)
             .fold<double>(0, (sum, m) => sum + m.montantPaye);
         
@@ -104,14 +99,14 @@ class _FinanceDashboardPageState extends State<FinanceDashboardPage> with Single
                 style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 2),
               ),
               const SizedBox(height: 16),
-              _buildActivityRevenueList(members),
+              _buildActivityRevenueList(box),
               const SizedBox(height: 32),
               Text(
                 'RÉPARTITION PAR PAIEMENT',
                 style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white38, letterSpacing: 2),
               ),
               const SizedBox(height: 16),
-              _buildPaymentRevenueList(members),
+              _buildPaymentRevenueList(box),
             ],
           ),
         );
@@ -119,9 +114,9 @@ class _FinanceDashboardPageState extends State<FinanceDashboardPage> with Single
     );
   }
 
-  Widget _buildPaymentRevenueList(List<MemberAccount> members) {
+  Widget _buildPaymentRevenueList(Box<MemberAccount> box) {
     final Map<String, double> totals = {};
-    for (var m in members) {
+    for (var m in box.values) {
       if (m.montantPaye <= 0) continue;
       final method = m.methodePaiement ?? 'Non spécifié';
       totals[method] = (totals[method] ?? 0) + m.montantPaye;
@@ -203,9 +198,9 @@ class _FinanceDashboardPageState extends State<FinanceDashboardPage> with Single
     );
   }
 
-  Widget _buildActivityRevenueList(List<MemberAccount> members) {
+  Widget _buildActivityRevenueList(Box<MemberAccount> box) {
     final Map<String, double> totals = {};
-    for (var m in members) {
+    for (var m in box.values) {
       final act = m.activite.toUpperCase();
       totals[act] = (totals[act] ?? 0) + m.montantPaye;
     }

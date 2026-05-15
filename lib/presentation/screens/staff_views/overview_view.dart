@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../domain/models/member_account.dart';
 import '../../../data/services/hive_service.dart';
 
@@ -11,24 +10,13 @@ class OverviewView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We need to access the repository. Since it's not passed to OverviewView directly, 
-    // we'll use a hack or better, I should have passed it.
-    // Wait, OverviewView is inside StaffDashboardScreen which has the repository.
-    // I'll check how OverviewView is instantiated.
-    return StreamBuilder<List<MemberAccount>>(
-      stream: FirebaseFirestore.instance.collection('members').snapshots().map(
-        (s) => s.docs.map((d) => MemberAccount.fromJson(d.data())).toList()
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: Colors.white));
-        }
-        
-        final members = snapshot.data ?? [];
-        final total = members.length;
-        final active = members.where((m) => !m.isExpired).length;
+    return ValueListenableBuilder(
+      valueListenable: Hive.box<MemberAccount>(HiveService.accountsBoxName).listenable(),
+      builder: (context, Box<MemberAccount> box, _) {
+        final total = box.length;
+        final active = box.values.where((m) => !m.isExpired).length;
         final expired = total - active;
-        final revenue = members.fold<double>(0, (sum, m) => sum + m.montantPaye);
+        final revenue = box.values.fold<double>(0, (sum, m) => sum + m.montantPaye);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -55,7 +43,7 @@ class OverviewView extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 48),
-              _buildRecentActivity(members),
+              _buildRecentActivity(box),
             ],
           ),
         );
@@ -102,9 +90,9 @@ class OverviewView extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentActivity(List<MemberAccount> members) {
+  Widget _buildRecentActivity(Box<MemberAccount> box) {
     // Sort by dateDebut descending (most recent first)
-    final recent = List<MemberAccount>.from(members)
+    final recent = box.values.toList()
       ..sort((a, b) => b.dateDebut.compareTo(a.dateDebut));
     final limit = recent.take(10).toList();
     

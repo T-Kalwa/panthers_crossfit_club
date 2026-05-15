@@ -23,6 +23,14 @@ class StaffDashboardScreen extends StatefulWidget {
 }
 
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Activation de la synchronisation en temps réel (Firestore -> Hive)
+    // Cela permet d'avoir les données à jour dès que la connexion revient.
+    widget.memberRepository.startRealtimeSync();
+  }
+
   int _selectedIndex = 0;
   MemberAccount? _memberToEdit;
 

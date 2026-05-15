@@ -108,6 +108,34 @@ class MemberRepository implements IMemberRepository {
     }
   }
 
+  /// Start a background listener to sync Firestore changes to Hive
+  void startRealtimeSync() {
+    debugPrint("🛰️ Activation de la synchronisation en temps réel Firestore -> Hive...");
+    FirebaseFirestore.instance.collection('members').snapshots().listen((snapshot) {
+      final box = Hive.box<MemberAccount>(HiveService.accountsBoxName);
+      
+      for (var change in snapshot.docChanges) {
+        final data = change.doc.data();
+        if (data == null) continue;
+        
+        final matricule = change.doc.id.toUpperCase();
+        
+        if (change.type == DocumentChangeType.removed) {
+          box.delete(matricule);
+          debugPrint("🗑️ Sync : Membre $matricule supprimé (Firestore -> Hive)");
+        } else {
+          try {
+            final account = MemberAccount.fromJson(data);
+            box.put(matricule, account);
+            debugPrint("🔄 Sync : Membre $matricule mis à jour (Firestore -> Hive)");
+          } catch (e) {
+            debugPrint("⚠️ Erreur parsing Sync : $e");
+          }
+        }
+      }
+    }, onError: (e) => debugPrint("❌ Erreur Stream Sync : $e"));
+  }
+
   @override
   Future<MemberAccount?> loginByQrData(String qrData) async {
     // Use SecureQrService if it's a secure QR, else treat as raw matricule for legacy
@@ -121,17 +149,8 @@ class MemberRepository implements IMemberRepository {
 
   @override
   Future<List<MemberAccount>> getAllMembers() async {
-    final snapshot = await FirebaseFirestore.instance.collection('members').get();
-    return snapshot.docs.map((doc) => MemberAccount.fromJson(doc.data())).toList();
-  }
-
-  Stream<List<MemberAccount>> getMembersStream() {
-    return FirebaseFirestore.instance
-        .collection('members')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => MemberAccount.fromJson(doc.data()))
-            .toList());
+    final account = _hiveService.getMemberAccount();
+    return account != null ? [account] : [];
   }
 
 
