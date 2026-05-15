@@ -252,7 +252,30 @@ class MemberRepository implements IMemberRepository {
 
   Future<MemberAccount?> getMemberAccountByMatricule(String matricule) async {
     final box = Hive.box<MemberAccount>(HiveService.accountsBoxName);
-    return box.get(matricule.toUpperCase());
+    final matriculeUpper = matricule.toUpperCase();
+    
+    // 1. Priorité Hive (Vitesse & Offline)
+    final cached = box.get(matriculeUpper);
+    if (cached != null) return cached;
+    
+    // 2. Fallback Firestore (Si nouveau membre pas encore sync)
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('members')
+          .doc(matriculeUpper)
+          .get()
+          .timeout(const Duration(seconds: 3));
+          
+      if (doc.exists) {
+        final account = MemberAccount.fromJson(doc.data()!);
+        await box.put(matriculeUpper, account); // On le met en cache
+        return account;
+      }
+    } catch (e) {
+      debugPrint("ℹ️ Scanner : Pas de fallback Firestore (Hors ligne ou timeout)");
+    }
+    
+    return null;
   }
 
   bool hasSavedMembers() {
