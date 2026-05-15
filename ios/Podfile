@@ -1,0 +1,25 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '15.0'
+
+# CocoaPods analytics sends network stats synchronous off the main thread.
+# This can delay pod commands and, if network access is limited, cause pod commands to fail.
+# To disable networking, see https://guides.cocoapods.org/plugins/terminal.html#no-networking.
+install! 'cocoapods', :deterministic_uuids => false
+
+# Flutter-specific CocoaPods settings
+project_path = 'Runner.xcodeproj'
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+end
