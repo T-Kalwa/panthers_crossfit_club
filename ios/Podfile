@@ -1,4 +1,20 @@
-# Uncomment this line to define a global platform for your project
+# The following has been added by flutter_tools.
+# It should not be modified.
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get has been executed"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/\AFLUTTER_ROOT=(.*)\z/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper.rb'), flutter_root)
+
 platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronous off the main thread.
@@ -6,8 +22,6 @@ platform :ios, '15.0'
 # To disable networking, see https://guides.cocoapods.org/plugins/terminal.html#no-networking.
 install! 'cocoapods', :deterministic_uuids => false
 
-# Flutter-specific CocoaPods settings
-project_path = 'Runner.xcodeproj'
 target 'Runner' do
   use_frameworks!
   use_modular_headers!
