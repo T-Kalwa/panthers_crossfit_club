@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
+import 'legal_screen.dart';
+
+import '../widgets/payment_bottom_sheet.dart';
 
 class AboutUsScreen extends StatefulWidget {
   const AboutUsScreen({super.key});
@@ -56,6 +60,15 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     }
   }
 
+  void _showPaymentModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => const PaymentBottomSheet(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,8 +84,8 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(color: Colors.black.withOpacity(0.8)),
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+              child: Container(color: Colors.black.withOpacity(0.85)),
             ),
           ),
           CustomScrollView(
@@ -87,10 +100,10 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 title: Text(
-                  'ABOUT US',
+                  'NOTRE CLUB',
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w900,
-                    letterSpacing: 2,
+                    letterSpacing: 4,
                     fontSize: 18,
                   ),
                 ),
@@ -99,17 +112,19 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                 padding: const EdgeInsets.all(24.0),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildStatusBadge(),
-                    const SizedBox(height: 30),
-                    _buildSectionTitle('HORAIRES'),
-                    _buildScheduleTable(),
-                    const SizedBox(height: 30),
-                    _buildSectionTitle('NOS TARIFS'),
-                    _buildPricingSection(),
-                    const SizedBox(height: 30),
-                    _buildSectionTitle('NOUS CONTACTER'),
-                    _buildContactSection(),
+                    _buildStatusBadge().animate().fadeIn().scale(curve: Curves.easeOutBack),
                     const SizedBox(height: 40),
+                    ...[
+                      _buildSectionTitle('L\'ESPACE PANTHERS'),
+                      _buildScheduleTable(),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('TARIFS SESSIONS'),
+                      _buildPricingSection(),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('RESTEZ CONNECTÉ'),
+                      _buildContactSection(),
+                      const SizedBox(height: 40),
+                    ].animate(interval: 100.ms).fadeIn(duration: 500.ms).slideY(begin: 0.1, end: 0),
                   ]),
                 ),
               ),
@@ -121,44 +136,44 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
   }
 
   Widget _buildStatusBadge() {
+    final color = isOpen ? const Color(0xFF39FF14) : Colors.redAccent;
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
-            color: isOpen ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isOpen ? const Color(0xFF39FF14).withOpacity(0.3) : Colors.red.withOpacity(0.3),
-              width: 1,
+              color: color.withOpacity(0.3),
+              width: 1.5,
             ),
             boxShadow: [
-              if (isOpen)
-                BoxShadow(
-                  color: const Color(0xFF39FF14).withOpacity(0.1),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 30,
+                spreadRadius: 2,
+              ),
             ],
           ),
           child: Text(
-            isOpen ? 'OUVERT' : 'FERMÉ',
+            isOpen ? 'CLUB OUVERT' : 'CLUB FERMÉ',
             style: GoogleFonts.outfit(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: isOpen ? const Color(0xFF39FF14) : Colors.redAccent,
+              color: color,
               letterSpacing: 4,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           nextStatusMessage.toUpperCase(),
           style: GoogleFonts.outfit(
             fontSize: 12,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700,
             color: Colors.white54,
-            letterSpacing: 1.5,
+            letterSpacing: 2,
           ),
         ),
       ],
@@ -174,17 +189,20 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
           Text(
             title,
             style: GoogleFonts.outfit(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
               letterSpacing: 4,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Container(
-            width: 40,
-            height: 2,
-            color: Colors.white24,
+            width: 50,
+            height: 3,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(1.5),
+            ),
           ),
         ],
       ),
@@ -199,28 +217,29 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Column(
         children: schedule.map((item) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   item['days']!,
-                  style: GoogleFonts.outfit(color: Colors.white70),
+                  style: GoogleFonts.outfit(color: Colors.white70, fontSize: 15),
                 ),
                 Text(
                   item['hours']!,
                   style: GoogleFonts.outfit(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
                   ),
                 ),
               ],
@@ -236,7 +255,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
       children: [
         _buildPricingCard(
           'CROSSFIT',
-          Icons.fitness_center,
+          Icons.bolt_rounded,
           [
             '1 mois: 130\$ / 160\$',
             '10 jours: 50\$ / 60\$',
@@ -246,7 +265,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
         const SizedBox(height: 16),
         _buildPricingCard(
           'BOXE',
-          Icons.sports_mma,
+          Icons.sports_mma_rounded,
           [
             '1 mois: 90\$',
             '3 mois: 250\$',
@@ -256,7 +275,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
         const SizedBox(height: 16),
         _buildPricingCard(
           'ZUMBA / AÉRO',
-          Icons.directions_run,
+          Icons.favorite_rounded,
           [
             '1 mois: 100\$',
             '1 séance: 15\$',
@@ -269,24 +288,24 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
   Widget _buildPricingCard(String title, IconData icon, List<String> prices) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 24),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,17 +313,35 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                 Text(
                   title,
                   style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
                     color: Colors.white,
+                    letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 ...prices.map((p) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    p,
-                    style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13),
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        p,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white60,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 )),
               ],
@@ -320,50 +357,67 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
       children: [
         _buildContactButton(
           'APPELER LE CLUB',
-          Icons.phone,
-          'tel:+243962909624',
+          Icons.phone_rounded,
+          () => _launchUrl('tel:+243962909624'),
+          const Color(0xFFFF8C00),
         ),
         const SizedBox(height: 12),
         _buildContactButton(
           'WHATSAPP US',
-          Icons.chat,
-          'https://wa.me/243962909624?text=Hello Panthers Club !',
+          Icons.chat_bubble_rounded,
+          () => _launchUrl('https://wa.me/243962909624?text=Hello Panthers Club !'),
+          const Color(0xFF25D366),
         ),
         const SizedBox(height: 12),
         _buildContactButton(
           'PAIEMENT MOBILE',
-          Icons.account_balance_wallet,
-          'tel:+243859439292',
+          Icons.account_balance_wallet_rounded,
+          () => _showPaymentModal(),
+          const Color(0xFFFFB347),
+        ),
+        const SizedBox(height: 12),
+        _buildContactButton(
+          'CONDITIONS D\'UTILISATION',
+          Icons.gavel_rounded,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LegalScreen(),
+              fullscreenDialog: true,
+            ),
+          ),
+          Colors.white54,
         ),
       ],
     );
   }
 
-  Widget _buildContactButton(String title, IconData icon, String url) {
+  Widget _buildContactButton(String title, IconData icon, VoidCallback onTap, Color color) {
     return SizedBox(
       width: double.infinity,
-      height: 54,
+      height: 64,
       child: ElevatedButton(
-        onPressed: () => _launchUrl(url),
+        onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white.withOpacity(0.05),
+          backgroundColor: Colors.white.withOpacity(0.04),
           foregroundColor: Colors.white,
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          side: BorderSide(color: color.withOpacity(0.2)),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20),
-            const SizedBox(width: 12),
+            Icon(icon, size: 24, color: color),
+            const SizedBox(width: 16),
             Text(
               title,
               style: GoogleFonts.outfit(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                letterSpacing: 1,
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+                letterSpacing: 2,
               ),
             ),
           ],
@@ -372,3 +426,4 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     );
   }
 }
+

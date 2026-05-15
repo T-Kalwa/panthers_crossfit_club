@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1026177402408",
+    "project_id": "gymscan-pro-v1",
+    "storage_bucket": "gymscan-pro-v1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1026177402408:android:9bf6f3bb3aeadfba65971d",
+        "android_client_info": {
+          "package_name": "com.example.gymscan_pro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp1KWQ0z6bdwuID0rp96LBxy4W6VHDyVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1026177402408:android:f57b57ceae9e4fbb65971d",
+        "android_client_info": {
+          "package_name": "com.example.panthers_crossfit_club"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCp1KWQ0z6bdwuID0rp96LBxy4W6VHDyVY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

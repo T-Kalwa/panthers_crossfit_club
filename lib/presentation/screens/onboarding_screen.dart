@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'dart:ui';
 import '../../data/services/hive_service.dart';
 import 'login_screen.dart';
+import 'legal_screen.dart';
 import '../../data/repositories/member_repository.dart';
+import 'package:flutter/gestures.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -20,20 +23,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      title: "Track real\nprogress",
-      description: "See your journey unfold with powerful insights and analytics.",
+      title: "VOTRE PASS\nDIGITAL",
+      description: "Accédez au club instantanément avec votre matricule personnel.",
       image: "assets/images/Int_1.jpg", 
       color: Colors.white,
     ),
     OnboardingData(
-      title: "Welcome To Our\nEasy Workout",
-      description: "Designing A Fitness And Gym Application Involves Creating A Comprehensive Digital Platform.",
+      title: "SCAN &\nGO",
+      description: "Présentez votre QR code à l'entrée pour un check-in sans contact.",
       image: "assets/images/Int_2.jpg",
       color: Colors.white,
     ),
     OnboardingData(
-      title: "Join the\nPanthers Club",
-      description: "Accept our terms to start your premium fitness journey with us.",
+      title: "SUIVI EN\nTEMPS RÉEL",
+      description: "Consultez la validité de votre abonnement et vos objectifs en un clin d'œil.",
       image: "assets/images/int_3.jpg",
       color: Colors.white,
       isFinal: true,
@@ -53,11 +56,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboarding() async {
     await _hiveService.setHasSeenOnboarding(true);
+    await _hiveService.setHasAcceptedCGU(true);
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => LoginScreen(memberRepository: MemberRepository())),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -186,12 +191,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text(
-                                "I agree to the terms of service and membership rules.",
-                                style: GoogleFonts.outfit(
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                    RichText(
+                                      text: TextSpan(
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 14,
+                                          color: Colors.white70,
+                                          height: 1.4,
+                                        ),
+                                        children: [
+                                          const TextSpan(text: "J'accepte les "),
+                                          TextSpan(
+                                            text: "conditions d'utilisation",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              decoration: TextDecoration.underline,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            recognizer: TapGestureRecognizer()
+                                              ..onTap = () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const LegalScreen(),
+                                                    fullscreenDialog: true,
+                                                  ),
+                                                );
+                                              },
+                                          ),
+                                          const TextSpan(text: " et les règles d'adhésion."),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ],
@@ -221,7 +255,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            _pages[_currentIndex].isFinal ? "GET STARTED" : "NEXT",
+                            _pages[_currentIndex].isFinal ? "COMMENCER" : "SUIVANT",
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.2,
@@ -238,21 +272,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           
-          // Skip Button
-          Positioned(
-            top: 60,
-            right: 24,
-            child: TextButton(
-              onPressed: _completeOnboarding,
-              child: Text(
-                "Skip",
-                style: GoogleFonts.outfit(
-                  color: Colors.white38,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );

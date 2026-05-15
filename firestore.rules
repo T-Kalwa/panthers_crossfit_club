@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORAIRE : On autorise tout le monde pour permettre le bootstrap (nettoyage)
+    // Une fois le compte 'ADMIN' créé, nous remettrons le verrouillage strict.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

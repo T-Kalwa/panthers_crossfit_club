@@ -1,30 +1,40 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../domain/models/member.dart';
+import '../../domain/models/member_account.dart';
+import '../../domain/models/user_role.dart';
+import './auth_service.dart';
 
 class HiveService {
-  static const String memberBoxName = 'member_box';
+  static const String accountsBoxName = 'member_account_box';
   static const String settingsBoxName = 'settings_box';
 
   static Future<void> init() async {
     await Hive.initFlutter();
-    Hive.registerAdapter(MemberAdapter());
-    await Hive.openBox<Member>(memberBoxName);
-    await Hive.openBox(settingsBoxName);
-  }
-
-  Future<void> saveMember(Member member) async {
-    final box = Hive.box<Member>(memberBoxName);
-    await box.put('current_member', member);
-  }
-
-  Member? getMember() {
-    final box = Hive.box<Member>(memberBoxName);
-    return box.get('current_member');
+    
+    // Récupération de la clé de chiffrement sécurisée
+    final encryptionKey = await AuthService.getOrCreateEncryptionKey();
+    final cipher = HiveAesCipher(encryptionKey);
+    
+    Hive.registerAdapter(MemberAccountAdapter());
+    Hive.registerAdapter(UserRoleAdapter());
+    
+    // Ouverture des boxes avec chiffrement AES-256
+    await Hive.openBox<MemberAccount>(accountsBoxName, encryptionCipher: cipher);
+    await Hive.openBox(settingsBoxName, encryptionCipher: cipher);
   }
 
   Future<void> clear() async {
-    final box = Hive.box<Member>(memberBoxName);
-    await box.clear();
+    final accountsBox = Hive.box<MemberAccount>(accountsBoxName);
+    await accountsBox.clear();
+  }
+
+  bool isLoggedIn() {
+    final box = Hive.box<MemberAccount>(accountsBoxName);
+    return box.containsKey('current_account');
+  }
+
+  MemberAccount? getMemberAccount() {
+    final box = Hive.box<MemberAccount>(accountsBoxName);
+    return box.get('current_account');
   }
 
   // Onboarding settings
@@ -36,6 +46,16 @@ class HiveService {
   Future<void> setHasSeenOnboarding(bool value) async {
     final box = Hive.box(settingsBoxName);
     await box.put('has_seen_onboarding', value);
+  }
+
+  bool get hasAcceptedCGU {
+    final box = Hive.box(settingsBoxName);
+    return box.get('has_accepted_cgu', defaultValue: false);
+  }
+
+  Future<void> setHasAcceptedCGU(bool value) async {
+    final box = Hive.box(settingsBoxName);
+    await box.put('has_accepted_cgu', value);
   }
 
   // Weekly Fitness Tracker
@@ -59,5 +79,15 @@ class HiveService {
   Future<void> saveWeekId(int weekId) async {
     final box = Hive.box(settingsBoxName);
     await box.put('stored_week_id', weekId);
+  }
+
+  bool get hasSeenDashboardTutorial {
+    final box = Hive.box(settingsBoxName);
+    return box.get('has_seen_dashboard_tutorial', defaultValue: false);
+  }
+
+  Future<void> setHasSeenDashboardTutorial(bool value) async {
+    final box = Hive.box(settingsBoxName);
+    await box.put('has_seen_dashboard_tutorial', value);
   }
 }

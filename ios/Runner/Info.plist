@@ -49,5 +49,19 @@
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>Cette application nécessite l'accès à la caméra pour scanner les codes QR des membres.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Cette application nécessite l'accès à votre galerie pour enregistrer ou partager des documents.</string>
+		<key>NSPhotoLibraryAddUsageDescription</key>
+		<string>Cette application nécessite l'autorisation d'ajouter des photos à votre galerie.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Cette application peut nécessiter l'accès au microphone pour les fonctionnalités multimédia.</string>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>sms</string>
+			<string>tel</string>
+			<string>https</string>
+		</array>
 	</dict>
 </plist>
