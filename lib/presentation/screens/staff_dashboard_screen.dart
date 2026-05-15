@@ -23,6 +23,22 @@ class StaffDashboardScreen extends StatefulWidget {
 }
 
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Synchronisation automatique des données depuis Firestore à l'ouverture
+    _syncData();
+  }
+
+  Future<void> _syncData() async {
+    try {
+      await widget.memberRepository.refreshMembersCache();
+      if (mounted) setState(() {}); // Refresh UI after sync
+    } catch (e) {
+      debugPrint("❌ Erreur synchro initiale: $e");
+    }
+  }
+
   int _selectedIndex = 0;
   MemberAccount? _memberToEdit;
 

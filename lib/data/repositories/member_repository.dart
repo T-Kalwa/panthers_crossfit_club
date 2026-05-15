@@ -180,19 +180,40 @@ class MemberRepository implements IMemberRepository {
   /// Refreshes the local Hive cache with all members from Firestore
   Future<void> refreshMembersCache() async {
     try {
+      debugPrint("🔄 Synchro Firestore -> Hive en cours...");
       final snapshot = await FirebaseFirestore.instance
           .collection('members')
-          .get(const GetOptions(source: Source.serverAndCache));
+          .get(); // On laisse Firestore gérer le cache/server intelligemment
       
+      if (snapshot.docs.isEmpty) {
+        debugPrint("ℹ️ Aucun membre trouvé sur Firestore.");
+        return;
+      }
+
       final box = Hive.box<MemberAccount>(HiveService.accountsBoxName);
+      
+      // On garde la session actuelle pour ne pas déconnecter l'utilisateur
+      final currentAccount = box.get('current_account');
+      
       await box.clear();
 
       for (var doc in snapshot.docs) {
-        final account = MemberAccount.fromJson(doc.data());
-        await box.put(account.matricule.toUpperCase(), account);
+        try {
+          final account = MemberAccount.fromJson(doc.data());
+          await box.put(account.matricule.toUpperCase(), account);
+        } catch (e) {
+          debugPrint("⚠️ Erreur parsing membre ${doc.id}: $e");
+        }
       }
+
+      // Restauration de la session actuelle
+      if (currentAccount != null) {
+        await box.put('current_account', currentAccount);
+      }
+      
+      debugPrint("✅ Synchro terminée : ${snapshot.docs.length} membres récupérés.");
     } catch (e) {
-      print('Error refreshing members cache: $e');
+      debugPrint('❌ Erreur refreshMembersCache: $e');
     }
   }
 
