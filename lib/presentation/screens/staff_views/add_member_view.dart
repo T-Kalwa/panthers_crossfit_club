@@ -49,7 +49,7 @@ class _AddMemberViewState extends State<AddMemberView> {
     final edit = widget.memberToEdit;
     _matriculeController = TextEditingController(text: edit?.matricule ?? '');
     _nomsController = TextEditingController(text: edit?.noms ?? '');
-    _telephoneController = TextEditingController(text: edit?.telephone ?? '+243');
+    _telephoneController = TextEditingController(text: edit?.telephone ?? '+243 ');
     _selectedRole = edit?.role ?? 'membre';
     
     _activities = ['CROSSFIT', 'BOXE', 'ZUMBA / AÉRO'];

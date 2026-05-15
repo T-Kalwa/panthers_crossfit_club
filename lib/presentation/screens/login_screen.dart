@@ -7,6 +7,7 @@ import '../../data/repositories/member_repository.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'member_dashboard_screen.dart';
 import 'admin_hub_page.dart';
+import 'legal_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final MemberRepository memberRepository;
@@ -19,7 +20,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _matriculeController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(text: "+243 ");
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
@@ -88,6 +89,16 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showLegalNotice(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LegalScreen(),
+        fullscreenDialog: true,
+      ),
+    );
   }
 
   void _showRevokedDialog(BuildContext context) {
@@ -460,20 +471,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                TextField(
-                                  controller: _phoneController,
-                                  style: GoogleFonts.outfit(color: Colors.white),
-                                  keyboardType: TextInputType.phone,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _handleLogin(),
-                                  decoration: InputDecoration(
-                                    hintText: "Numéro de téléphone",
-                                    prefixIcon: const Icon(
-                                      Icons.phone_outlined,
-                                      color: Colors.white,
+                                  TextField(
+                                    controller: _phoneController,
+                                    style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1),
+                                    keyboardType: TextInputType.phone,
+                                    textInputAction: TextInputAction.done,
+                                    onSubmitted: (_) => _handleLogin(),
+                                    decoration: InputDecoration(
+                                      hintText: "810 000 000",
+                                      hintStyle: GoogleFonts.outfit(color: Colors.white24),
+                                      labelText: "Numéro de téléphone",
+                                      labelStyle: GoogleFonts.outfit(color: Colors.white70),
+                                      prefixIcon: const Icon(
+                                        Icons.phone_outlined,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
-                                ),
                               const SizedBox(height: 32),
                               SizedBox(
                                 width: double.infinity,
@@ -517,7 +531,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1, end: 0),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed: () => _showLegalNotice(context),
+                      child: Text(
+                        'Conditions Générales & Politique de Confidentialité',
+                        style: GoogleFonts.outfit(
+                          color: Colors.white24,
+                          fontSize: 10,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),

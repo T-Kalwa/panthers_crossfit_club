@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../domain/models/member_account.dart';
 import '../../data/services/secure_qr_service.dart';
@@ -77,11 +78,13 @@ class _ScanScreenState extends State<ScanScreen> {
     
     if (type == 'success') {
       _audioPlayer.play(AssetSource('sounds/success.mp3'));
+      HapticFeedback.mediumImpact();
       color = const Color(0xFF39FF14); // Cyber Green
       title = 'ACCÈS AUTORISÉ';
       icon = Icons.check_circle_outline_rounded;
     } else if (type == 'expired') {
       _audioPlayer.play(AssetSource('sounds/error.mp3'));
+      HapticFeedback.vibrate();
       color = Colors.redAccent;
       title = 'ABONNEMENT EXPIRÉ';
       icon = Icons.error_outline_rounded;

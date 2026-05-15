@@ -22,7 +22,7 @@ class _DemoAddMemberViewState extends State<DemoAddMemberView> {
   bool _isSaving = false;
   
   final TextEditingController _nomsController = TextEditingController();
-  final TextEditingController _telephoneController = TextEditingController(text: '+243');
+  final TextEditingController _telephoneController = TextEditingController();
   
   String _selectedActivity = 'CROSSFIT';
   String _selectedDuration = '1 mois';

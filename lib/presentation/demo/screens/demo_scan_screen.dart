@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import '../../../data/repositories/member_repository.dart';
 import '../../../domain/models/member_account.dart';
 import '../../../data/services/demo_auth_service.dart';
@@ -84,6 +85,12 @@ class _DemoScanScreenState extends State<DemoScanScreen> {
     }
 
     _audioPlayer.play(AssetSource(sound)).catchError((e) => debugPrint('Sound error: $e'));
+    
+    if (type == 'success') {
+      HapticFeedback.mediumImpact();
+    } else {
+      HapticFeedback.vibrate();
+    }
 
     showGeneralDialog(
       context: context,

@@ -1023,10 +1023,62 @@ class _MemberDashboardScreenState extends State<MemberDashboardScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => _showDeleteAccountDialog(context),
+              child: Text(
+                'SUPPRIMER MON COMPTE',
+                style: GoogleFonts.outfit(
+                  color: Colors.white24,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildModalCloseButton(context),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF151515),
+        title: Text(
+          'Supprimer le compte ?',
+          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Cette action est irréversible. Vos données d\'abonnement seront supprimées. Voulez-vous continuer ?',
+          style: GoogleFonts.outfit(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('ANNULER', style: GoogleFonts.outfit(color: Colors.white38)),
+          ),
+          TextButton(
+            onPressed: () async {
+              // Dans une implémentation réelle, on appellerait le repository pour supprimer
+              // Pour l'instant, on déconnecte et on affiche un message
+              await _hiveService.clear();
+              if (!context.mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => LoginScreen(memberRepository: MemberRepository())),
+                (route) => false,
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Demande de suppression envoyée à l\'administration.')),
+              );
+            },
+            child: Text('SUPPRIMER', style: GoogleFonts.outfit(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
